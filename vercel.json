@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "fluid": true,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/games/balls/index.html" }
+  ],
+  "functions": {
+    "api/balls.mjs": {
+      "maxDuration": 300,
+      "regions": ["fra1"]
+    }
+  }
+}
