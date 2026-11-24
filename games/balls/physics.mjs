@@ -1,13 +1,47 @@
-const R=47.52,D=R*2,MIN_X=R,MAX_X=800-R,MIN_Y=R,MAX_Y=480-R;
+const R=47.52,D=R*2,MIN_X=R,MAX_X=800-R,MIN_Y=R,MAX_Y=480-R,TICK_MS=32;
+export const PALETTE=[
+ {hex:'#47f09a',name:'Szmaragdowy'},
+ {hex:'#ff5e78',name:'Karmazynowy'},
+ {hex:'#49c6ff',name:'Błękitny'},
+ {hex:'#c77dff',name:'Fioletowy'},
+ {hex:'#ff9f43',name:'Pomarańczowy'},
+ {hex:'#ff66c4',name:'Neonowy róż'}
+];
+function pickPairColors(fixed){
+ if(Array.isArray(fixed)&&fixed.length===2)return fixed;
+ const pool=[...PALETTE];
+ const a=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+ const b=pool[Math.floor(Math.random()*pool.length)];
+ return [a,b];
+}
 export function speedBonus(p){return p.floyd?(p.power-5)*10:p.kirk&&p.teaBuff>0?25:0;}
 export function selectFighter(p,id){
- p.floyd=id==='floyd';p.net=id==='net';p.kirk=id==='kirk';p.maxHP=p.floyd?250:(p.net||p.kirk)?200:100;p.hp=p.maxHP;
+ p.floyd=id==='floyd';p.net=id==='net';p.kirk=id==='kirk';p.diddy=id==='diddy';
+ p.maxHP=p.floyd?250:(p.net||p.kirk||p.diddy)?200:100;
+ p.hp=p.maxHP;
 }
-export function fresh(){
- return [0,1].map(i=>({x:i?600:200,y:240,power:5,floyd:false,net:false,kirk:false,drops:[],stars:[],waves:[],shots:0,starHits:0,beam:null,teas:0,teaBuff:0,teaAnim:0,pulse:null,pickupAnim:null,maxHP:100,hp:100,angle:i?Math.PI:0,vx:0,vy:0,cool:0}));
+export function fresh(fixedColors){
+ const colors=pickPairColors(fixedColors);
+ return [0,1].map(i=>({
+  x:i?600:200,y:240,power:5,
+  floyd:false,net:false,kirk:false,diddy:false,
+  color:colors[i].hex,colorName:colors[i].name,
+  drops:[],stars:[],waves:[],oils:[],
+  shots:0,starHits:0,beam:null,
+  teas:0,teaBuff:0,teaAnim:0,
+  pickupAnim:null,
+  maxHP:100,hp:100,angle:i?Math.PI:0,vx:0,vy:0,cool:0
+ }));
 }
 export function launch(ps){
- for(const p of ps){p.started=Date.now();p.throws=0;p.decays=0;p.shots=0;p.starHits=0;p.beam=null;p.teas=0;p.teaBuff=0;p.teaAnim=0;p.pulse=null;p.pickupAnim=null;p.waves=[];p.drops=[];p.stars=[];p.power=5;p.vx=4*Math.cos(p.angle);p.vy=4*Math.sin(p.angle);}
+ for(const p of ps){
+  p.started=Date.now();
+  p.throws=0;p.decays=0;p.shots=0;p.starHits=0;p.beam=null;
+  p.teas=0;p.teaBuff=0;p.teaAnim=0;p.pickupAnim=null;
+  p.waves=[];p.drops=[];p.stars=[];p.oils=[];
+  p.power=5;
+  p.vx=4*Math.cos(p.angle);p.vy=4*Math.sin(p.angle);
+ }
 }
 export function step(ps){
  for(const p of ps){
@@ -18,10 +52,6 @@ export function step(ps){
   if(p.beam){
    p.beam.ttl--;
    if(p.beam.ttl<=0)p.beam=null;
-  }
-  if(p.pulse){
-   p.pulse.ttl--;
-   if(p.pulse.ttl<=0)p.pulse=null;
   }
   if(p.pickupAnim){
    p.pickupAnim.ttl--;
@@ -60,7 +90,6 @@ export function step(ps){
    });
   }
   if(p.kirk){
-   // Special ability: drinks hot tea every 15s (+25 HP, +25% speed & power 8 for 5s)
    const teas=Math.floor(elapsed/15000);
    if(teas>p.teas){
     p.teas=teas;
@@ -69,7 +98,6 @@ export function step(ps){
     p.teaAnim=75;
     p.power=8;
    }
-   // Basic ability: Debate Wave from microphone every 4s (9 DMG + trajectory knockback)
    const shots=Math.floor(elapsed/4000);
    if(shots>p.shots){
     p.shots=shots;
@@ -96,6 +124,40 @@ export function step(ps){
     return false;
    });
   }
+  if(p.diddy){
+   const throws=Math.floor(elapsed/6000);
+   if(throws>p.throws){
+    p.throws=throws;
+    const tx=85+Math.random()*630,ty=85+Math.random()*310;
+    p.oils.push({x:p.x,y:p.y,sx:p.x,sy:p.y,tx,ty,born:elapsed,flight:true,r:58,landedAt:0,left:10000,ownAcc:0,foeAcc:0});
+   }
+   p.oils=p.oils.filter(oil=>{
+    if(oil.flight){
+     const t=Math.min(1,(elapsed-oil.born)/600);
+     oil.x=oil.sx+(oil.tx-oil.sx)*t;oil.y=oil.sy+(oil.ty-oil.sy)*t;
+     if(t<1)return true;
+     oil.flight=false;oil.landedAt=elapsed;oil.left=10000;
+    }
+    oil.left=Math.max(0,10000-(elapsed-oil.landedAt));
+    if(oil.left<=0)return false;
+    const hitDist=oil.r+R*0.5;
+    if(Math.hypot(p.x-oil.x,p.y-oil.y)<=hitDist){
+     oil.ownAcc+=TICK_MS;
+     while(oil.ownAcc>=1000/3){
+      oil.ownAcc-=1000/3;
+      if(p.hp>0)p.hp=Math.min(p.maxHP,p.hp+1);
+     }
+    }
+    if(Math.hypot(rival.x-oil.x,rival.y-oil.y)<=hitDist){
+     oil.foeAcc+=TICK_MS;
+     while(oil.foeAcc>=1000/3){
+      oil.foeAcc-=1000/3;
+      if(rival.hp>0){rival.hp=Math.max(0,rival.hp-1);rival.cool=Math.max(rival.cool,4);}
+     }
+    }
+    return true;
+   });
+  }
   if(!p.floyd)continue;
   const throws=Math.floor(elapsed/3000),decays=Math.floor(elapsed/7000);
   p.power=Math.max(0,p.power-(decays-p.decays));p.decays=decays;
@@ -103,41 +165,18 @@ export function step(ps){
    p.throws=throws;
    const tx=60+Math.random()*680,ty=60+Math.random()*360;
    p.drops.push({x:p.x,y:p.y,sx:p.x,sy:p.y,tx,ty,born:elapsed,flight:true});
-   if(p.drops.length>6)p.drops.shift();
   }
   p.drops=p.drops.filter(item=>{
    if(item.flight){
-    const t=Math.min(1,(elapsed-item.born)/750);
+    const t=Math.min(1,(elapsed-item.born)/800);
     item.x=item.sx+(item.tx-item.sx)*t;item.y=item.sy+(item.ty-item.sy)*t;
     if(t<1)return true;
     item.flight=false;
    }
-   // Magnetic pull when Floyd passes within 140 px of a landed capsule
-   const dx=p.x-item.x,dy=p.y-item.y,dist=Math.hypot(dx,dy);
-   if(dist<140&&dist>0.1){
-    const pull=(1-dist/140)*4.8+1.2;
-    item.x+=(dx/dist)*pull;
-    item.y+=(dy/dist)*pull;
-   }
-   if(Math.hypot(p.x-item.x,p.y-item.y)>R+8)return true;
-   const wasMax=p.power>=10;
+   if(Math.hypot(p.x-item.x,p.y-item.y)>R+4)return true;
+   p.hp=Math.min(250,p.hp+5);
    p.power=Math.min(10,p.power+1);
-   if(wasMax||p.power===10){
-    // Overdrive Shockwave at 10/10 power!
-    p.hp=Math.min(250,p.hp+(wasMax?15:20));
-    p.pulse={x:p.x,y:p.y,r:R,maxR:230,ttl:22,max:22};
-    const rdx=rival.x-p.x,rdy=rival.y-p.y,rdist=Math.hypot(rdx,rdy);
-    if(rdist<=230){
-     rival.hp=Math.max(0,rival.hp-18);rival.cool=16;
-     const rn=rdist||1,rSpeed=Math.hypot(rival.vx,rival.vy)||4;
-     const nvx=rival.vx+(rdx/rn)*3,nvy=rival.vy+(rdy/rn)*3,nn=Math.hypot(nvx,nvy)||1;
-     rival.vx=nvx/nn*rSpeed;rival.vy=nvy/nn*rSpeed;
-    }
-    p.pickupAnim={x:p.x,y:p.y,ttl:34,max:34,label:'⚡ MAX MOC! FALA -18 HP'};
-   }else{
-    p.hp=Math.min(250,p.hp+6);
-    p.pickupAnim={x:p.x,y:p.y,ttl:24,max:24,label:'+6 HP · +1 SIŁA'};
-   }
+   p.pickupAnim={x:p.x,y:p.y,ttl:24,max:24,label:'+5 HP · +1 Fent'};
    return false;
   });
  }
@@ -149,6 +188,6 @@ export function step(ps){
  if(closing<=0)return;
  const impactA=a.vx*nx+a.vy*ny,impactB=-b.vx*nx-b.vy*ny;
  a.vx-=closing*nx;a.vy-=closing*ny;b.vx+=closing*nx;b.vy+=closing*ny;
- if(impactA>0.001){b.hp=Math.max(0,b.hp-a.power);b.cool=a.power>=8?14:10;}
- if(impactB>0.001){a.hp=Math.max(0,a.hp-b.power);a.cool=b.power>=8?14:10;}
+ if(impactA>0.001){b.hp=Math.max(0,b.hp-a.power);b.cool=10;}
+ if(impactB>0.001){a.hp=Math.max(0,a.hp-b.power);a.cool=10;}
 }
