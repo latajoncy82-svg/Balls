@@ -788,11 +788,11 @@ kbd{
           </div>
           <div class="stats">
             <span class="stat hp">200 HP</span>
-            <span class="stat">Siła 5</span>
+            <span class="stat">0 DMG zderz.</span>
             <span class="stat spec">Gwiazdy 12</span>
             <span class="stat spec">Super 50 DMG</span>
           </div>
-          <p class="fighter-desc">Co 5 s strzela odbijającą się gwiazdą (12 DMG). Po 5 trafieniach odpala Super Gwiazdę Dawida i promień za 50 HP!</p>
+          <p class="fighter-desc">Co 5 s strzela odbijającą się gwiazdą (12 DMG). Po 5 trafieniach odpala Super Gwiazdę Dawida i promień za 50 HP. Brak ataku z bliska.</p>
           <div class="hp-bar"><span style="width:80%"></span></div>
         </div>
       </button>
@@ -812,11 +812,11 @@ kbd{
           </div>
           <div class="stats">
             <span class="stat hp">200 HP</span>
-            <span class="stat">Siła 5 (8)</span>
+            <span class="stat">0 DMG zderz.</span>
             <span class="stat tea">Fala 18→0 DMG</span>
             <span class="stat tea">☕ Herbata 15 s</span>
           </div>
-          <p class="fighter-desc">Co 4 s wysyła falę debaty (18 DMG, traci 3 DMG/s w locie do 0). Co 15 s pije herbatę: +25 HP, +25% speed i siła 8 na 5 s!</p>
+          <p class="fighter-desc">Co 4 s wysyła falę debaty (18 DMG, traci 3 DMG/s do 0). Co 15 s pije herbatę: +25 HP i +25% speed na 5 s. Brak ataku z bliska.</p>
           <div class="hp-bar"><span style="width:80%"></span></div>
         </div>
       </button>
@@ -836,11 +836,11 @@ kbd{
           </div>
           <div class="stats">
             <span class="stat hp">200 HP</span>
-            <span class="stat">Siła 5</span>
+            <span class="stat">0 DMG zderz.</span>
             <span class="stat oil">Baby Oil +25%</span>
-            <span class="stat oil">±1 HP/s · 10 s</span>
+            <span class="stat oil">-2 / +1 HP co 0,5 s</span>
           </div>
-          <p class="fighter-desc">Co 6 s rzuca duży Baby Oil (+25% zasięgu) na 10 s — nawet lekkie dotknięcie leczy Didiego (+1 HP/s) i rani rywala (-1 HP/s).</p>
+          <p class="fighter-desc">Co 6 s rzuca duży Baby Oil (+25% zasięgu) na 10 s — nawet lekkie dotknięcie rani rywala (-2 DMG / 0,5 s) i leczy Didiego (+1 HP / 0,5 s). Brak ataku z bliska.</p>
           <div class="hp-bar"><span style="width:80%"></span></div>
         </div>
       </button>
@@ -945,7 +945,7 @@ kbd{
         <div class="stage-card">
           <div class="card-kicker" id="lobbyKicker">LOBBY ONLINE 1V1 · 5 ŻYĆ</div>
           <h2 class="card-title" id="lobbyTitle">Przygotowanie do meczu</h2>
-          <p class="card-sub" id="lobbyMapLabel">Mapa: Klasyczna · Wybierz postać i mapę powyżej</p>
+          <p class="card-sub" id="lobbyMapLabel">Mapa: Losowa co rundę 🎲 · Wybierz postać powyżej</p>
           <div class="lobby-slots">
             <div class="slot-box" id="slotOwn">
               <div>
@@ -1417,6 +1417,7 @@ function renderAbilityPanel(el,p,isOwn,now){
     <div class="ab-title"><span>✡ Gwiazda Dawida</span><span class="ab-val">${nextStar}</span></div>
     <div class="ab-bar"><div class="ab-fill" style="width:${starPct.toFixed(1)}%"></div></div>
     <div class="ab-desc">Odbijający się pocisk za 12 DMG.</div>
+    <div class="ab-chips"><span class="chip blue">Dystans · 0 DMG zderz.</span></div>
    </div>
    <div class="ab-card">
     <div class="ab-title"><span>⚡ Super Gwiazda</span><span class="ab-val">${p.beam?'AKTYWNA!':hits+'/5'}</span></div>
@@ -1434,11 +1435,12 @@ function renderAbilityPanel(el,p,isOwn,now){
     <div class="ab-title"><span>🎙️ Fala Debaty</span><span class="ab-val">${nextWave}</span></div>
     <div class="ab-bar"><div class="ab-fill" style="width:${wavePct.toFixed(1)}%"></div></div>
     <div class="ab-desc">18 DMG na starcie, traci 3 DMG/s w locie do 0.</div>
+    <div class="ab-chips"><span class="chip blue">Dystans · 0 DMG zderz.</span></div>
    </div>
    <div class="ab-card">
     <div class="ab-title"><span>☕ Herbata</span><span class="ab-val">${teaOn?'BUFF '+teaLabel:teaLabel}</span></div>
     <div class="ab-bar"><div class="ab-fill" style="width:${teaPct.toFixed(1)}%"></div></div>
-    <div class="ab-desc">${teaOn?'Aktywna! Siła 8 i +25% szybkości.':'+25 HP, +25% speed i siła 8 na 5 s.'}</div>
+    <div class="ab-desc">${teaOn?'Aktywna! +25% szybkości.':'+25 HP i +25% szybkości na 5 s.'}</div>
    </div>`;
  }else if(p.diddy){
   const activeOils=(p.oils||[]).filter(o=>!o.flight).length;
@@ -1448,11 +1450,11 @@ function renderAbilityPanel(el,p,isOwn,now){
    <div class="ab-card">
     <div class="ab-title"><span>🧴 Baby Oil</span><span class="ab-val">${nextOil}</span></div>
     <div class="ab-bar"><div class="ab-fill" style="width:${oilPct.toFixed(1)}%"></div></div>
-    <div class="ab-desc">Duża plama (+25%) na 10 s: +1 HP/s Didiemu, -1 HP/s rywalowi.</div>
+    <div class="ab-desc">Duża plama (+25%) na 10 s: -2 DMG rywalowi i +1 HP Didiemu co 0,5 s.</div>
    </div>
    <div class="ab-card">
     <div class="ab-title"><span>💧 Aktywne plamy</span><span class="ab-val">${activeOils}</span></div>
-    <div class="ab-chips"><span class="chip oil">Atak: ${dmg} DMG</span></div>
+    <div class="ab-chips"><span class="chip oil">Dystans · 0 DMG zderz.</span></div>
    </div>`;
  }else{
   body=`
@@ -1789,7 +1791,7 @@ function updateLobbyUI(v){
  const r=v.ready||[false,false];
  readyState=r;myReady=Boolean(r[seat]);
  const f=v.fighters||[selected,'floyd'];
- lobbyMapLabel.textContent='Mapa: '+(MAP_LABELS[v.mapChoice]||MAP_LABELS[v.mapId]||'Klasyczna')+' · Wybierz postać i mapę powyżej';
+ lobbyMapLabel.textContent='Mapa: Losowa co rundę 🎲 · Wybierz postać powyżej';
  slotOwnFighter.textContent=FIGHTER_NAMES[f[seat]]||fighterLabel(v.ps[seat]);
  slotFoeFighter.textContent=FIGHTER_NAMES[f[1-seat]]||fighterLabel(v.ps[1-seat]);
  slotOwn.classList.toggle('ready',Boolean(r[seat]));
@@ -1811,6 +1813,7 @@ function start(next){
  solo.setAttribute('aria-pressed',String(mode==='solo'));
  online.setAttribute('aria-pressed',String(mode==='online'));
  if(mode==='solo'){
+  mapBtns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.map===selectedMap)));
   soloState='setup';
   soloOverlay.classList.add('show');
   updateSoloSetup();
@@ -1818,7 +1821,8 @@ function start(next){
  }
  soloState='';
  soloOverlay.classList.remove('show');
- activeMap=selectedMap==='random'?'arena':selectedMap;
+ mapBtns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.map==='random')));
+ activeMap='arena';
  const init=fresh(null,activeMap);selectFighter(init[0],selected);render(init);
  phasePill.textContent='ŁĄCZENIE';phasePill.className='phase-pill';
  msg.textContent='Łączenie z lobby online 1v1 (5 żyć)…';
@@ -1829,7 +1833,6 @@ function start(next){
   if(v.seat!==undefined){
    seat=v.seat;
    ws.send(JSON.stringify({type:'fighter',id:selected}));
-   if(seat===0&&selectedMap!=='arena')ws.send(JSON.stringify({type:'map',id:selectedMap}));
    lastRound=v.round||1;round=lastRound;
    angle=v.ps[seat].angle;deadline=performance.now()+v.left;
   }
@@ -1840,10 +1843,6 @@ function start(next){
    resultOverlay.classList.remove('show');
   }
   if(v.mapId)activeMap=v.mapId;
-  if(v.mapChoice){
-   selectedMap=v.mapChoice;
-   mapBtns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.map===selectedMap)));
-  }
   lives=v.lives||lives;
   phase=v.phase||'';
   current=v.ps;
@@ -1854,7 +1853,7 @@ function start(next){
    lobbyOverlay.classList.add('show');
    updateLobbyUI(v);
    phasePill.textContent='LOBBY · GOTOWOŚĆ';phasePill.className='phase-pill aim';
-   msg.textContent='Lobby 1v1: wybierz postać i mapę, a następnie kliknij „Jestem gotowy”.';
+   msg.textContent='Lobby 1v1: wybierz postać i kliknij „Jestem gotowy” (losowa mapa co rundę).';
    return;
   }
   lobbyOverlay.classList.remove('show');
@@ -1867,11 +1866,11 @@ function start(next){
    myReady=Boolean(r[seat]);
    betweenReadyBtn.setAttribute('aria-pressed',String(myReady));
    betweenReadyBtn.textContent=myReady?'✓ Czekam na rywala…':'✓ Gotowy teraz';
-   intermissionText.textContent='Runda '+round+': '+rw+' · Następna za '+sec+' s';
+   intermissionText.textContent='Runda '+round+': '+rw+' · Nowa losowa mapa za '+sec+' s';
    intermissionBar.classList.add('show');
    phasePill.textContent='RUNDA '+round+' · '+rw.toUpperCase();
    phasePill.className='phase-pill done';
-   msg.textContent='Runda '+round+': '+rw+' · Kolejna runda za '+sec+' s (możesz zmienić postać)';
+   msg.textContent='Runda '+round+': '+rw+' · Kolejna runda (losowa mapa) za '+sec+' s (możesz zmienić postać)';
    return;
   }
   intermissionBar.classList.remove('show');
@@ -1968,14 +1967,16 @@ function chooseFighter(id){
  }
 }
 function chooseMap(id){
+ if(mode==='online'){
+  mapBtns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.map==='random')));
+  pickerNote.textContent='W trybie Online 1v1 mapa losuje się automatycznie co rundę 🎲';
+  return;
+ }
  selectedMap=id;
  mapBtns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.map===id)));
- if(mode==='solo'&&soloState==='setup'){
+ if(soloState==='setup'){
   pickerNote.textContent='';
   updateSoloSetup();
- }else if(mode==='online'&&phase==='lobby'&&ws?.readyState===1){
-  ws.send(JSON.stringify({type:'map',id}));
-  pickerNote.textContent='Mapa zmieniona w lobby (reset gotowości)';
  }else{
   pickerNote.textContent='Nowa mapa wejdzie w następnej grze';
  }

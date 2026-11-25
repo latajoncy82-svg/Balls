@@ -32,6 +32,10 @@ export function resolveMap(id){
  if(id==='random')return MAP_IDS[Math.floor(Math.random()*MAP_IDS.length)];
  return MAPS[id]?id:'arena';
 }
+export function randomMap(excludeId=null){
+ const pool=excludeId&&MAP_IDS.length>1?MAP_IDS.filter(id=>id!==excludeId):MAP_IDS;
+ return pool[Math.floor(Math.random()*pool.length)];
+}
 function pickPairColors(fixed){
  if(Array.isArray(fixed)&&fixed.length===2)return fixed;
  const pool=[...PALETTE];
@@ -86,7 +90,7 @@ function collideEntityMap(e,radius,m,onBumper){
   }
  }
 }
-export function attackDamage(p){return p.floyd?p.power+1:p.power;}
+export function attackDamage(p){return (p.net||p.kirk||p.diddy)?0:p.floyd?p.power+1:p.power;}
 export function speedBonus(p){return (p.floyd?(p.power-5)*10:p.kirk&&p.teaBuff>0?25:0)+(p.bumperBoost>0?35:0);}
 export function selectFighter(p,id){
  p.floyd=id==='floyd';p.net=id==='net';p.kirk=id==='kirk';p.diddy=id==='diddy';
@@ -148,10 +152,7 @@ export function step(ps,mapId){
    if(p.pickupAnim.ttl<=0)p.pickupAnim=null;
   }
   if(p.teaAnim>0)p.teaAnim--;
-  if(p.teaBuff>0){
-   p.teaBuff--;
-   if(p.teaBuff===0&&p.kirk)p.power=5;
-  }
+  if(p.teaBuff>0)p.teaBuff--;
  }
  for(const p of ps){
   const rival=ps[0]===p?ps[1]:ps[0];
@@ -187,7 +188,6 @@ export function step(ps,mapId){
     p.hp=Math.min(200,p.hp+25);
     p.teaBuff=300;
     p.teaAnim=140;
-    p.power=8;
    }
    const shots=Math.floor(elapsed/4000);
    if(shots>p.shots){
@@ -232,16 +232,16 @@ export function step(ps,mapId){
     const hitDist=oil.r+R;
     if(Math.hypot(p.x-oil.x,p.y-oil.y)<=hitDist){
      oil.ownAcc+=STEP_MS;
-     while(oil.ownAcc>=999.99){
-      oil.ownAcc-=1000;
+     while(oil.ownAcc>=499.99){
+      oil.ownAcc-=500;
       if(p.hp>0)p.hp=Math.min(p.maxHP,p.hp+1);
      }
     }
     if(Math.hypot(rival.x-oil.x,rival.y-oil.y)<=hitDist){
      oil.foeAcc+=STEP_MS;
-     while(oil.foeAcc>=999.99){
-      oil.foeAcc-=1000;
-      if(rival.hp>0){rival.hp=Math.max(0,rival.hp-1);rival.cool=Math.max(rival.cool,6);}
+     while(oil.foeAcc>=499.99){
+      oil.foeAcc-=500;
+      if(rival.hp>0){rival.hp=Math.max(0,rival.hp-2);rival.cool=Math.max(rival.cool,6);}
      }
     }
     return true;
@@ -277,6 +277,7 @@ export function step(ps,mapId){
  if(closing<=0)return;
  const impactA=a.vx*nx+a.vy*ny,impactB=-b.vx*nx-b.vy*ny;
  a.vx-=closing*nx;a.vy-=closing*ny;b.vx+=closing*nx;b.vy+=closing*ny;
- if(impactA>0.001){b.hp=Math.max(0,b.hp-attackDamage(a));b.cool=18;}
- if(impactB>0.001){a.hp=Math.max(0,a.hp-attackDamage(b));a.cool=18;}
+ const dmgA=attackDamage(a),dmgB=attackDamage(b);
+ if(impactA>0.001&&dmgA>0){b.hp=Math.max(0,b.hp-dmgA);b.cool=18;}
+ if(impactB>0.001&&dmgB>0){a.hp=Math.max(0,a.hp-dmgB);a.cool=18;}
 }

@@ -1,8 +1,7 @@
 import {createServer} from 'node:http';
 import {WebSocketServer} from 'ws';
-import {fresh,selectFighter,launch,step,STEP_MS,MAP_IDS,resolveMap} from '../games/balls/physics.mjs';
+import {fresh,selectFighter,launch,step,STEP_MS,randomMap} from '../games/balls/physics.mjs';
 const VALID_FIGHTERS=['floyd','net','kirk','diddy','classic'];
-const VALID_MAPS=[...MAP_IDS,'random'];
 const server=createServer((req,res)=>res.end('Balls online'));
 const sockets=new WebSocketServer({server,maxPayload:256});
 let waiting=null;
@@ -27,7 +26,7 @@ sockets.on('connection',socket=>{
  const fighters=['floyd','floyd'];
  const ready=[false,false];
  const lives=[5,5];
- let round=1,mapChoice='arena',mapId='arena';
+ let round=1,mapChoice='random',mapId=randomMap();
  let ps=fresh(null,mapId);
  const colors=ps.map(p=>({hex:p.color,name:p.colorName}));
  selectFighter(ps[0],fighters[0]);selectFighter(ps[1],fighters[1]);
@@ -39,7 +38,8 @@ sockets.on('connection',socket=>{
   pair.forEach(s=>send(s,payload));
  };
  const startAim=()=>{
-  mapId=resolveMap(mapChoice);
+  mapChoice='random';
+  mapId=randomMap(round>1?mapId:null);
   ps=fresh(colors,mapId);
   selectFighter(ps[0],fighters[0]);selectFighter(ps[1],fighters[1]);
   phase='aim';roundWinner=null;ready[0]=ready[1]=false;
@@ -65,15 +65,6 @@ sockets.on('connection',socket=>{
     fighters[i]=msg.id;
     if(phase==='lobby'||(phase==='aim'&&Date.now()<deadline))selectFighter(ps[i],msg.id);
     if(phase==='lobby')broadcast(0);
-    return;
-   }
-   if(msg.type==='map'&&phase==='lobby'&&VALID_MAPS.includes(msg.id)){
-    mapChoice=msg.id;
-    mapId=resolveMap(mapChoice);
-    ps=fresh(colors,mapId);
-    selectFighter(ps[0],fighters[0]);selectFighter(ps[1],fighters[1]);
-    ready[0]=ready[1]=false;
-    broadcast(0);
     return;
    }
    if(msg.type==='ready'&&(phase==='lobby'||phase==='between')){
